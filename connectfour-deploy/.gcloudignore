@@ -1,0 +1,19 @@
+# Node.js specific
+node_modules/
+npm-debug.log
+
+# Git
+.git/
+.gitignore
+
+# Deploy specific
+.gcloudignore
+README.md
+.DS_Store
+*.md
+.vscode/
+
+# Development files
+*.log
+*.swp
+*.env
