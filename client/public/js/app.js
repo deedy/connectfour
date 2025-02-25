@@ -234,13 +234,15 @@ function updateStatusMessage() {
   statusText.textContent = message;
   statusMessage.appendChild(statusText);
   
-  // Add AI metrics if available
+  // Always add AI metrics container (even if empty) to maintain layout
+  const aiInfo = document.createElement('div');
+  aiInfo.className = 'ai-metrics';
+  
+  // Fill with metrics if available
   if (gameState.aiMetrics && 
       ((gameState.gameMode === '1p' && gameState.lastMove && gameState.board[gameState.lastMove.row][gameState.lastMove.col] === 2) || 
        (gameState.gameMode === 'ai'))) {
     const metrics = gameState.aiMetrics;
-    const aiInfo = document.createElement('div');
-    aiInfo.className = 'ai-metrics';
     
     // Only show metrics if we have actual data
     if (metrics.positionsEvaluated > 0 || metrics.calculationTimeMs > 0) {
@@ -250,9 +252,11 @@ function updateStatusMessage() {
         <span class="ai-metric">Positions: ${metrics.positionsEvaluated.toLocaleString()}</span>
         <span class="ai-metric">${metrics.reasonForMove}</span>
       `;
-      statusMessage.appendChild(aiInfo);
     }
   }
+  
+  // Always add the container to maintain consistent layout
+  statusMessage.appendChild(aiInfo);
 }
 
 // Highlight winning cells
