@@ -289,19 +289,14 @@ function handleError(message) {
   statusMessage.textContent = `Error: ${message}`;
 }
 
-// Reset the game
+// Reset the game - now always goes back to the main menu
 function resetGame() {
   if (winnerModal) {
     winnerModal.classList.add('hidden');
   }
   
-  if (gameState && gameState.gameMode) {
-    // Start a new game with the same mode
-    startNewGame(gameState.gameMode);
-  } else {
-    // Go back to game mode selection
-    goBackToMenu();
-  }
+  // Go back to game mode selection
+  goBackToMenu();
 }
 
 // Go back to game mode selection
