@@ -314,14 +314,19 @@ function highlightWinningCells() {
 
 // Handle game state update from server
 function handleGameStateUpdate(state) {
-  gameState = state;
-  gameId = state.id;
-  
-  // Save game state to localStorage
-  saveGameToLocalStorage();
-  
-  // Update UI
-  updateUI();
+  // Only update if:
+  // 1. We don't have a game state yet, or
+  // 2. The update is for our current game
+  if (!gameState || state.id === gameId) {
+    gameState = state;
+    gameId = state.id;
+    
+    // Save game state to localStorage
+    saveGameToLocalStorage();
+    
+    // Update UI
+    updateUI();
+  }
 }
 
 // Handle errors from server

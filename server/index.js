@@ -101,6 +101,7 @@ io.on('connection', (socket) => {
 
 // Set up broadcast function for the game manager to use
 gameManager.setBroadcastFunction((gameId, state) => {
+  // Only emit to clients who have specifically joined this game's room
   io.to(gameId).emit('gameState', state);
 });
 

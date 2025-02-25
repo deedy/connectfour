@@ -28,7 +28,15 @@ class GameManager {
     
     // If this is an AI vs AI game, start the move loop
     if (mode === 'ai' && result) {
-      this.aiGames.set(gameId, game);
+      // Clear any existing timer for this game
+      if (this.aiGames.has(gameId)) {
+        const existingTimer = this.aiGames.get(gameId).timerId;
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+      }
+      
+      // Schedule the first AI move
       this.scheduleNextAIMove(gameId, 1000); // First move after 1 second
     }
     
@@ -61,7 +69,9 @@ class GameManager {
       return;
     }
     
-    setTimeout(() => {
+    // Create a unique timer for this specific game
+    // This ensures that multiple AI vs AI games don't interfere with each other
+    const timerId = setTimeout(() => {
       // Make sure the game still exists and is in AI mode
       if (!this.games.has(gameId) || this.games.get(gameId).gameMode !== 'ai') {
         return;
@@ -76,7 +86,7 @@ class GameManager {
       if (col !== null) {
         game.makeMove(col);
         
-        // Broadcast the updated state to all clients
+        // Broadcast the updated state only to clients viewing this specific game
         if (typeof this.broadcastGameState === 'function') {
           this.broadcastGameState(gameId, game.getState());
         }
@@ -87,6 +97,13 @@ class GameManager {
         }
       }
     }, delay);
+    
+    // Store the timer ID with the gameId to allow cancellation if needed
+    // This prevents memory leaks and allows proper cleanup
+    this.aiGames.set(gameId, {
+      game: game,
+      timerId: timerId
+    });
   }
   
   // Set broadcast function from server
