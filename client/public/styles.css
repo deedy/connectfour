@@ -304,13 +304,14 @@ footer {
   box-shadow: var(--shadow);
   margin-bottom: 1rem;
   width: 100%;
-  min-height: 50px;
+  height: 88px; /* Fixed height to prevent layout shift */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   font-size: 1.1rem;
   color: var(--secondary-color);
+  overflow: hidden; /* Prevent overflow */
 }
 
 .ai-metrics {
@@ -504,7 +505,7 @@ footer {
   }
 
   .status-message {
-    min-height: 60px; /* Taller on mobile for multiple lines */
+    height: 88px; /* Keep consistent height on tablet */
     padding: 0.5rem;
     font-size: 1rem;
   }
@@ -535,13 +536,14 @@ footer {
   }
 
   .status-message {
-    min-height: 70px;
+    height: 90px; /* Slightly taller for mobile */
     padding: 0.5rem 0.75rem;
     font-size: 0.95rem;
   }
   
   .ai-metrics {
     font-size: 0.7rem;
+    margin-top: 4px;
   }
   
   .ai-metric {
