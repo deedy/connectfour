@@ -153,13 +153,13 @@ footer {
 .game-info {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   background: white;
   padding: 1rem;
   border-radius: 10px;
   box-shadow: var(--shadow);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .player-turn {
@@ -200,6 +200,19 @@ footer {
 
 .status-message {
   font-weight: 600;
+  text-align: center;
+  background: white;
+  padding: 0.7rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.1rem;
+  color: var(--secondary-color);
 }
 
 /* Board */
@@ -372,6 +385,12 @@ footer {
     gap: 1rem;
   }
 
+  .status-message {
+    height: 60px; /* Taller on mobile for multiple lines */
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+
   .board {
     gap: 8px;
     padding: 10px;
@@ -389,8 +408,14 @@ footer {
   }
 
   .player-turn {
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .status-message {
+    height: 60px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
   }
 
   .board {
