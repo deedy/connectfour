@@ -21,6 +21,11 @@ app.get('/api/games', (req, res) => {
   res.json(gameManager.getAllGames());
 });
 
+app.get('/api/active-games', (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+  res.json(gameManager.getActiveGames(limit));
+});
+
 app.get('/api/games/:id', (req, res) => {
   const game = gameManager.getGame(req.params.id);
   if (!game) {
@@ -84,10 +89,19 @@ io.on('connection', (socket) => {
       }
     }
   });
+  
+  socket.on('getActiveGames', () => {
+    socket.emit('activeGames', gameManager.getActiveGames());
+  });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
+});
+
+// Set up broadcast function for the game manager to use
+gameManager.setBroadcastFunction((gameId, state) => {
+  io.to(gameId).emit('gameState', state);
 });
 
 const PORT = process.env.PORT || 3000;

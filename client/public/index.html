@@ -20,6 +20,7 @@
       <div class="buttons">
         <button id="one-player" class="btn primary">1 Player (vs AI)</button>
         <button id="two-player" class="btn secondary">2 Players</button>
+        <button id="ai-vs-ai" class="btn special">AI vs AI</button>
       </div>
       <div class="game-info-text">
         <p>
@@ -29,6 +30,13 @@
         <p>
           <strong>Game progress is saved</strong> automatically, so you can return to your game even after closing the browser.
         </p>
+      </div>
+      
+      <div id="active-games-container" class="active-games-container">
+        <h3>Active Games</h3>
+        <div id="active-games-list" class="active-games-list">
+          <p class="loading-message">Loading active games...</p>
+        </div>
       </div>
     </div>
 

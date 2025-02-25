@@ -3,10 +3,12 @@ class Game {
     this.id = id;
     this.board = Array(6).fill().map(() => Array(7).fill(null));
     this.currentPlayer = 1; // 1 or 2
-    this.gameMode = null; // '1p' or '2p'
+    this.gameMode = null; // '1p' or '2p' or 'ai'
     this.gameStatus = 'waiting'; // 'waiting', 'playing', 'finished'
     this.winner = null; // null, 1, 2, 'draw'
     this.lastMove = null; // {row, col}
+    this.created = new Date().toISOString();
+    this.lastActivity = new Date().toISOString();
   }
 
   makeMove(col) {
@@ -30,6 +32,7 @@ class Game {
     // Place the piece
     this.board[row][col] = this.currentPlayer;
     this.lastMove = { row, col };
+    this.lastActivity = new Date().toISOString();
 
     // Check for win or draw
     if (this.checkWin(row, col)) {
@@ -93,6 +96,7 @@ class Game {
   setGameMode(mode) {
     this.gameMode = mode;
     this.gameStatus = 'playing';
+    this.lastActivity = new Date().toISOString();
     return true;
   }
 
@@ -104,17 +108,75 @@ class Game {
       gameMode: this.gameMode,
       gameStatus: this.gameStatus,
       winner: this.winner,
-      lastMove: this.lastMove
+      lastMove: this.lastMove,
+      created: this.created,
+      lastActivity: this.lastActivity
     };
+  }
+  
+  getAIMoveForPlayer(player) {
+    if (this.gameStatus !== 'playing') {
+      return null;
+    }
+    
+    const isAI2 = player === 2;
+    
+    // Temporarily set currentPlayer to the AI player if needed
+    const originalPlayer = this.currentPlayer;
+    if (this.currentPlayer !== player) {
+      this.currentPlayer = player;
+    }
+    
+    const MAX_DEPTH = 7;
+    const startTime = Date.now();
+    let timeLimit = 2000; // 2 seconds for AI vs AI to keep the game moving faster
+    
+    // Check for immediate winning moves or blocking moves first
+    const immediateMove = this.checkForImmediateMove();
+    if (immediateMove !== null) {
+      if (this.currentPlayer !== originalPlayer) {
+        this.currentPlayer = originalPlayer;
+      }
+      return immediateMove;
+    }
+    
+    // Use iterative deepening to get the best possible move within the time limit
+    let bestMove = null;
+    for (let currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++) {
+      const moveResult = this.minimax(
+        this.board, 
+        currentDepth, 
+        -Infinity, 
+        Infinity, 
+        true, 
+        startTime, 
+        timeLimit
+      );
+      
+      // If we've exceeded our time limit, break out and use the last complete depth
+      if (Date.now() - startTime > timeLimit) {
+        break;
+      }
+      
+      bestMove = moveResult.column;
+    }
+    
+    // Reset the player if needed
+    if (this.currentPlayer !== originalPlayer) {
+      this.currentPlayer = originalPlayer;
+    }
+    
+    return bestMove;
   }
 
   // AI methods
   getAIMove() {
+    // For regular 1p mode, use the AI as player 2
     if (this.currentPlayer !== 2 || this.gameStatus !== 'playing') {
       return null;
     }
 
-    const MAX_DEPTH = 7; // Increased depth from 5 to 7
+    const MAX_DEPTH = 7;
     const startTime = Date.now();
     let timeLimit = 4500; // 4.5 seconds to ensure we don't exceed the 5-second limit
 

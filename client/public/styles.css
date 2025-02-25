@@ -121,6 +121,17 @@ footer {
   transform: translateY(-2px);
 }
 
+.special {
+  background-color: #9b59b6;
+  color: white;
+  box-shadow: var(--shadow);
+}
+
+.special:hover {
+  background-color: #8e44ad;
+  transform: translateY(-2px);
+}
+
 .buttons {
   display: flex;
   gap: 1rem;
@@ -137,8 +148,94 @@ footer {
   border-radius: 10px;
   box-shadow: var(--shadow);
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   margin-bottom: 2rem;
+}
+
+/* Active Games */
+.active-games-container {
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+  text-align: left;
+}
+
+.active-games-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--secondary-color);
+}
+
+.active-games-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  padding: 0.5rem;
+}
+
+.game-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.game-item:last-child {
+  border-bottom: none;
+}
+
+.game-item:hover {
+  background-color: #f5f8fa;
+}
+
+.game-id {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.game-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.game-mode {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.game-status {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.status-playing {
+  background-color: rgba(46, 204, 113, 0.15);
+  color: #27ae60;
+}
+
+.status-waiting {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: #2980b9;
+}
+
+.status-finished {
+  background-color: rgba(231, 76, 60, 0.15);
+  color: #c0392b;
+}
+
+.loading-message {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 1rem;
+  font-style: italic;
 }
 
 /* Game Container */

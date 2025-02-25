@@ -23,9 +23,11 @@ const backToMenu = document.getElementById('back-to-menu');
 // Buttons
 const onePlayer = document.getElementById('one-player');
 const twoPlayer = document.getElementById('two-player');
+const aiVsAi = document.getElementById('ai-vs-ai');
 const newGame = document.getElementById('new-game');
 const shareGame = document.getElementById('share-game');
 const closeModalBtns = document.querySelectorAll('.close');
+const activeGamesList = document.getElementById('active-games-list');
 
 // Initialize the game
 function init() {
@@ -56,6 +58,7 @@ function init() {
   // Event listeners
   onePlayer.addEventListener('click', () => startNewGame('1p'));
   twoPlayer.addEventListener('click', () => startNewGame('2p'));
+  aiVsAi.addEventListener('click', () => startNewGame('ai'));
   newGame.addEventListener('click', resetGame);
   shareGame.addEventListener('click', showShareModal);
   playAgain.addEventListener('click', resetGame);
@@ -76,6 +79,10 @@ function init() {
   // Socket events
   socket.on('gameState', handleGameStateUpdate);
   socket.on('error', handleError);
+  socket.on('activeGames', updateActiveGamesList);
+
+  // Load active games
+  loadActiveGames();
 
   // Window events for persistence
   window.addEventListener('beforeunload', saveGameToLocalStorage);
@@ -198,7 +205,9 @@ function updateStatusMessage() {
       break;
       
     case 'playing':
-      if (gameState.gameMode === '1p' && gameState.currentPlayer === 2) {
+      if (gameState.gameMode === 'ai') {
+        message = `AI ${gameState.currentPlayer} is thinking...`;
+      } else if (gameState.gameMode === '1p' && gameState.currentPlayer === 2) {
         message = 'AI is thinking...';
       } else {
         message = `Player ${gameState.currentPlayer}'s turn`;
@@ -208,6 +217,8 @@ function updateStatusMessage() {
     case 'finished':
       if (gameState.winner === 'draw') {
         message = 'Game ended in a draw!';
+      } else if (gameState.gameMode === 'ai') {
+        message = `AI ${gameState.winner} wins!`;
       } else {
         const winner = gameState.winner === 1 ? 'Player 1' : (gameState.gameMode === '1p' ? 'AI' : 'Player 2');
         message = `${winner} wins!`;
@@ -337,6 +348,8 @@ function showWinnerModal() {
   
   if (gameState.winner === 'draw') {
     winnerMessage.textContent = 'Game ended in a draw!';
+  } else if (gameState.gameMode === 'ai') {
+    winnerMessage.textContent = `AI ${gameState.winner} wins!`;
   } else {
     const winner = gameState.winner === 1 ? 'Player 1' : (gameState.gameMode === '1p' ? 'AI' : 'Player 2');
     winnerMessage.textContent = `${winner} wins!`;
@@ -352,6 +365,92 @@ function saveGameToLocalStorage() {
     localStorage.setItem('connectFourGame', JSON.stringify(gameState));
   }
 }
+
+// Load active games
+function loadActiveGames() {
+  socket.emit('getActiveGames');
+}
+
+// Update active games list in the UI
+function updateActiveGamesList(games) {
+  if (!games || games.length === 0) {
+    activeGamesList.innerHTML = '<p class="no-games">No active games found</p>';
+    return;
+  }
+  
+  // Sort games: playing first, then waiting, then finished
+  const sortOrder = { 'playing': 0, 'waiting': 1, 'finished': 2 };
+  const sortedGames = [...games].sort((a, b) => {
+    // First sort by status
+    const statusDiff = sortOrder[a.gameStatus] - sortOrder[b.gameStatus];
+    if (statusDiff !== 0) return statusDiff;
+    
+    // Then by last activity (most recent first)
+    return new Date(b.lastActivity) - new Date(a.lastActivity);
+  });
+  
+  // Generate HTML for each game
+  const gamesHTML = sortedGames.map(game => {
+    // Get friendly mode text
+    let modeText = '';
+    switch(game.gameMode) {
+      case '1p': modeText = '1 Player vs AI'; break;
+      case '2p': modeText = '2 Players'; break;
+      case 'ai': modeText = 'AI vs AI'; break;
+      default: modeText = 'Unknown';
+    }
+    
+    // Format the game ID nicely
+    const displayId = game.id;
+    
+    // Get status class
+    const statusClass = `status-${game.gameStatus}`;
+    
+    // Get readable status
+    let statusText = '';
+    switch(game.gameStatus) {
+      case 'playing': statusText = 'In Progress'; break;
+      case 'waiting': statusText = 'Waiting'; break;
+      case 'finished': 
+        if (game.winner === 'draw') {
+          statusText = 'Draw';
+        } else if (game.gameMode === 'ai') {
+          statusText = `AI ${game.winner} Won`;
+        } else if (game.gameMode === '1p' && game.winner === 2) {
+          statusText = 'AI Won';
+        } else {
+          statusText = `Player ${game.winner} Won`;
+        }
+        break;
+      default: statusText = 'Unknown';
+    }
+    
+    // Create the element
+    return `
+      <div class="game-item" data-game-id="${game.id}">
+        <div class="game-details">
+          <div class="game-id">${displayId}</div>
+          <div class="game-mode">${modeText}</div>
+        </div>
+        <div class="game-status ${statusClass}">${statusText}</div>
+      </div>
+    `;
+  }).join('');
+  
+  // Update the list
+  activeGamesList.innerHTML = gamesHTML;
+  
+  // Add click event listeners to join games
+  document.querySelectorAll('.game-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const gameId = item.dataset.gameId;
+      joinGame(gameId);
+    });
+  });
+}
+
+// Refresh active games list periodically
+setInterval(loadActiveGames, 30000); // Refresh every 30 seconds
 
 // Initialize the game when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
