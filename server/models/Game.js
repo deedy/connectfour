@@ -110,7 +110,8 @@ class Game {
       winner: this.winner,
       lastMove: this.lastMove,
       created: this.created,
-      lastActivity: this.lastActivity
+      lastActivity: this.lastActivity,
+      aiMetrics: this.aiMetrics || null
     };
   }
   
@@ -119,7 +120,16 @@ class Game {
       return null;
     }
     
-    const isAI2 = player === 2;
+    const startTime = Date.now();
+    
+    // Initialize metrics for this AI move
+    this.aiMetrics = {
+      calculationTimeMs: 0,
+      searchDepth: 0,
+      positionsEvaluated: 0,
+      moveSelected: null,
+      reasonForMove: "Default strategy"
+    };
     
     // Temporarily set currentPlayer to the AI player if needed
     const originalPlayer = this.currentPlayer;
@@ -128,21 +138,53 @@ class Game {
     }
     
     const MAX_DEPTH = 7;
-    const startTime = Date.now();
     let timeLimit = 2000; // 2 seconds for AI vs AI to keep the game moving faster
     
     // Check for immediate winning moves or blocking moves first
     const immediateMove = this.checkForImmediateMove();
     if (immediateMove !== null) {
+      // Update metrics
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = 1;
+      this.aiMetrics.positionsEvaluated = 14; // Just checking immediate moves
+      this.aiMetrics.moveSelected = immediateMove;
+      this.aiMetrics.reasonForMove = "Found immediate winning move or blocking opponent's win";
+      
+      // Reset player if needed
       if (this.currentPlayer !== originalPlayer) {
         this.currentPlayer = originalPlayer;
       }
+      
       return immediateMove;
+    }
+
+    // Check for special defensive patterns
+    const specialDefensiveMove = this.checkForSpecialDefensiveMoves();
+    if (specialDefensiveMove !== null) {
+      // Update metrics
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = 2;
+      this.aiMetrics.positionsEvaluated = 20; // Approximate for pattern matching
+      this.aiMetrics.moveSelected = specialDefensiveMove;
+      this.aiMetrics.reasonForMove = "Detected and countered special pattern threat";
+      
+      // Reset player if needed
+      if (this.currentPlayer !== originalPlayer) {
+        this.currentPlayer = originalPlayer;
+      }
+      
+      return specialDefensiveMove;
     }
     
     // Use iterative deepening to get the best possible move within the time limit
     let bestMove = null;
+    let finalDepth = 0;
+    let positionsCount = 0;
+    
     for (let currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++) {
+      // Reset positions count for this depth
+      this.positionsEvaluated = 0;
+      
       const moveResult = this.minimax(
         this.board, 
         currentDepth, 
@@ -153,13 +195,24 @@ class Game {
         timeLimit
       );
       
+      // Store the depth we reached
+      finalDepth = currentDepth;
+      positionsCount += this.positionsEvaluated;
+      
       // If we've exceeded our time limit, break out and use the last complete depth
-      if (Date.now() - startTime > timeLimit) {
+      if (Date.now() - startTime > timeLimit || this.positionsEvaluated === 0) {
         break;
       }
       
       bestMove = moveResult.column;
     }
+    
+    // Update final AI metrics
+    this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+    this.aiMetrics.searchDepth = finalDepth;
+    this.aiMetrics.positionsEvaluated = positionsCount;
+    this.aiMetrics.moveSelected = bestMove;
+    this.aiMetrics.reasonForMove = `Minimax search to depth ${finalDepth}`;
     
     // Reset the player if needed
     if (this.currentPlayer !== originalPlayer) {
@@ -167,6 +220,46 @@ class Game {
     }
     
     return bestMove;
+  }
+  
+  // Check for special defensive patterns like the bottom-middle-three vulnerability
+  checkForSpecialDefensiveMoves() {
+    // Check if opponent is setting up the bottom-middle-three trap
+    const opponentPieces = [];
+    const player = this.currentPlayer;
+    const opponent = player === 1 ? 2 : 1;
+    
+    // Check bottom row, center area (columns 2, 3, 4)
+    for (let col = 2; col <= 4; col++) {
+      if (this.board[5][col] === opponent) {
+        opponentPieces.push({ row: 5, col });
+      }
+    }
+    
+    // If opponent has 2 pieces in the bottom middle three spots
+    if (opponentPieces.length === 2) {
+      // Find the empty column in the bottom middle three
+      for (let col = 2; col <= 4; col++) {
+        if (this.board[5][col] === null) {
+          // We should place our piece here to block the trap
+          return col;
+        }
+      }
+    }
+    
+    // Check if opponent already has 3 pieces in the bottom middle
+    if (opponentPieces.length === 3) {
+      // This is dangerous, we need to counter by placing a piece directly above
+      // Check which column needs immediate attention
+      for (let col = 2; col <= 4; col++) {
+        // If the row above is empty, place there to start blocking
+        if (this.board[4][col] === null) {
+          return col;
+        }
+      }
+    }
+    
+    return null;
   }
 
   // AI methods
@@ -178,26 +271,82 @@ class Game {
 
     const MAX_DEPTH = 7;
     const startTime = Date.now();
-    let timeLimit = 4500; // 4.5 seconds to ensure we don't exceed the 5-second limit
+    let timeLimit = 3000; // 3 seconds for regular AI moves, to ensure we don't exceed limits
+    
+    // Initialize metrics for this AI move
+    this.aiMetrics = {
+      calculationTimeMs: 0,
+      searchDepth: 0,
+      positionsEvaluated: 0,
+      moveSelected: null,
+      reasonForMove: "Default strategy"
+    };
 
     // Check for immediate winning moves or blocking moves first
     const immediateMove = this.checkForImmediateMove();
     if (immediateMove !== null) {
+      // Update metrics
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = 1;
+      this.aiMetrics.positionsEvaluated = 14; // Just checking immediate moves
+      this.aiMetrics.moveSelected = immediateMove;
+      this.aiMetrics.reasonForMove = "Found immediate winning move or blocking opponent's win";
+      
       return immediateMove;
     }
 
     // Consider opening moves for better strategy
     if (this.isOpeningPhase()) {
-      return this.getOpeningMove();
+      const openingMove = this.getOpeningMove();
+      
+      // Update metrics
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = 1;
+      this.aiMetrics.positionsEvaluated = 7; // Evaluating opening book
+      this.aiMetrics.moveSelected = openingMove;
+      this.aiMetrics.reasonForMove = "Using opening book strategy";
+      
+      return openingMove;
+    }
+    
+    // Check for the bottom-middle-three vulnerability
+    const specialDefensiveMove = this.checkForSpecialDefensiveMoves();
+    if (specialDefensiveMove !== null) {
+      // Update metrics
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = 2;
+      this.aiMetrics.positionsEvaluated = 20; // Approximate for pattern matching
+      this.aiMetrics.moveSelected = specialDefensiveMove;
+      this.aiMetrics.reasonForMove = "Detected and countered special pattern threat";
+      
+      return specialDefensiveMove;
     }
 
     // Use iterative deepening to get the best possible move within the time limit
     let bestMove = null;
+    let finalDepth = 0;
+    let positionsCount = 0;
+    
     for (let currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++) {
-      const moveResult = this.minimax(this.board, currentDepth, -Infinity, Infinity, true, startTime, timeLimit);
+      // Reset positions count for this depth
+      this.positionsEvaluated = 0;
+      
+      const moveResult = this.minimax(
+        this.board, 
+        currentDepth, 
+        -Infinity, 
+        Infinity, 
+        true, 
+        startTime, 
+        timeLimit
+      );
+      
+      // Store the depth we reached
+      finalDepth = currentDepth;
+      positionsCount += this.positionsEvaluated;
       
       // If we've exceeded our time limit, break out and use the last complete depth
-      if (Date.now() - startTime > timeLimit) {
+      if (Date.now() - startTime > timeLimit || this.positionsEvaluated === 0) {
         break;
       }
       
@@ -211,10 +360,24 @@ class Game {
       const columnPreference = [3, 2, 4, 1, 5, 0, 6];
       for (const col of columnPreference) {
         if (validMoves.includes(col)) {
-          return col;
+          bestMove = col;
+          break;
         }
       }
-      return validMoves[0]; // Fallback to first valid move
+      // Final fallback
+      if (bestMove === null && validMoves.length > 0) {
+        bestMove = validMoves[0];
+      }
+      
+      // Update metrics with fallback info
+      this.aiMetrics.reasonForMove = "Using fallback strategy (center preference)";
+    } else {
+      // Update final AI metrics for minimax search
+      this.aiMetrics.calculationTimeMs = Date.now() - startTime;
+      this.aiMetrics.searchDepth = finalDepth;
+      this.aiMetrics.positionsEvaluated = positionsCount;
+      this.aiMetrics.moveSelected = bestMove;
+      this.aiMetrics.reasonForMove = `Minimax search to depth ${finalDepth}`;
     }
 
     return bestMove;
@@ -325,6 +488,14 @@ class Game {
     if (Date.now() - startTime > timeLimit) {
       return { score: 0, column: null };
     }
+
+    // Initialize position counter if not already set
+    if (!this.positionsEvaluated) {
+      this.positionsEvaluated = 0;
+    }
+    
+    // Count this position
+    this.positionsEvaluated++;
 
     // Generate valid moves (non-full columns)
     const validMoves = this.getValidMoves(board);

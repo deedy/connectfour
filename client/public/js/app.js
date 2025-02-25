@@ -226,7 +226,33 @@ function updateStatusMessage() {
       break;
   }
   
-  statusMessage.textContent = message;
+  // Clear previous content
+  statusMessage.innerHTML = '';
+  
+  // Add main status message
+  const statusText = document.createElement('div');
+  statusText.textContent = message;
+  statusMessage.appendChild(statusText);
+  
+  // Add AI metrics if available
+  if (gameState.aiMetrics && 
+      ((gameState.gameMode === '1p' && gameState.lastMove && gameState.board[gameState.lastMove.row][gameState.lastMove.col] === 2) || 
+       (gameState.gameMode === 'ai'))) {
+    const metrics = gameState.aiMetrics;
+    const aiInfo = document.createElement('div');
+    aiInfo.className = 'ai-metrics';
+    
+    // Only show metrics if we have actual data
+    if (metrics.positionsEvaluated > 0 || metrics.calculationTimeMs > 0) {
+      aiInfo.innerHTML = `
+        <span class="ai-metric">Time: ${metrics.calculationTimeMs}ms</span>
+        <span class="ai-metric">Depth: ${metrics.searchDepth}</span>
+        <span class="ai-metric">Positions: ${metrics.positionsEvaluated.toLocaleString()}</span>
+        <span class="ai-metric">${metrics.reasonForMove}</span>
+      `;
+      statusMessage.appendChild(aiInfo);
+    }
+  }
 }
 
 // Highlight winning cells
