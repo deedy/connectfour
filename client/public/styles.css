@@ -10,6 +10,7 @@
   --background-color: #f8f9fa;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
+  --game-width: 590px; /* Single source of truth for game width */
 }
 
 * {
@@ -147,8 +148,7 @@ footer {
   padding: 2rem;
   border-radius: 10px;
   box-shadow: var(--shadow);
-  width: 100%;
-  max-width: 590px; /* Match board width exactly */
+  width: var(--game-width); /* Fixed game width */
   margin-bottom: 2rem;
 }
 
@@ -249,15 +249,13 @@ footer {
 
 /* Fixed width for game controls */
 .game-controls {
-  width: 100%;
-  max-width: 590px; /* Match board width exactly */
+  width: var(--game-width); /* Fixed game width */
   display: flex;
   justify-content: center;
 }
 
 .game-info {
-  width: 100%;
-  max-width: 590px; /* Match board width exactly */
+  width: var(--game-width); /* Fixed game width */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -312,8 +310,7 @@ footer {
   border-radius: 10px;
   box-shadow: var(--shadow);
   margin-bottom: 1rem;
-  width: 100%;
-  max-width: 590px; /* Match board width exactly */
+  width: var(--game-width); /* Fixed game width */
   height: 88px; /* Fixed height to prevent layout shift */
   display: flex;
   flex-direction: column;
@@ -334,7 +331,7 @@ footer {
   font-weight: normal;
   color: #777;
   width: 100%;
-  max-width: 580px; /* Slightly less than status message to avoid overflow issues */
+  max-width: calc(var(--game-width) - 10px); /* Slightly less than status message */
 }
 
 .ai-metric {
@@ -350,8 +347,7 @@ footer {
 /* Board */
 .board-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 590px; /* Fixed exact board size */
+  width: var(--game-width); /* Fixed game width */
   margin: 0 auto;
 }
 
@@ -471,9 +467,8 @@ footer {
   padding: 2rem;
   border-radius: 10px;
   box-shadow: var(--shadow);
-  max-width: 500px;
   width: 90%;
-  max-width: 590px; /* Match board width exactly */
+  max-width: var(--game-width); /* Fixed game width */
   text-align: center;
 }
 
@@ -509,6 +504,10 @@ footer {
 
 /* Responsive */
 @media (max-width: 768px) {
+  :root {
+    --game-width: min(590px, 95vw); /* Adjust width on tablets */
+  }
+
   h1 {
     font-size: 2.5rem;
   }
@@ -535,6 +534,10 @@ footer {
 }
 
 @media (max-width: 480px) {
+  :root {
+    --game-width: 92vw; /* Full width with small margin on phones */
+  }
+
   h1 {
     font-size: 2rem;
   }
@@ -568,5 +571,10 @@ footer {
   .board {
     gap: 6px;
     padding: 8px;
+  }
+
+  /* Adjust container padding for mobile */
+  .container {
+    padding: 1rem 0.5rem;
   }
 }
