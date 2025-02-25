@@ -137,8 +137,8 @@ class Game {
       this.currentPlayer = player;
     }
     
-    const MAX_DEPTH = 7;
-    let timeLimit = 2000; // 2 seconds for AI vs AI to keep the game moving faster
+    const MAX_DEPTH = 8; // Good depth for AI vs AI
+    let timeLimit = 3000; // 3 seconds for AI vs AI to balance speed with intelligence
     
     // Check for immediate winning moves or blocking moves first
     const immediateMove = this.checkForImmediateMove();
@@ -224,20 +224,21 @@ class Game {
   
   // Check for special defensive patterns like the bottom-middle-three vulnerability
   checkForSpecialDefensiveMoves() {
-    // Check if opponent is setting up the bottom-middle-three trap
-    const opponentPieces = [];
     const player = this.currentPlayer;
     const opponent = player === 1 ? 2 : 1;
+    
+    // 1. Check if opponent is setting up the bottom-middle-three trap
+    const opponentPiecesCenter = [];
     
     // Check bottom row, center area (columns 2, 3, 4)
     for (let col = 2; col <= 4; col++) {
       if (this.board[5][col] === opponent) {
-        opponentPieces.push({ row: 5, col });
+        opponentPiecesCenter.push({ row: 5, col });
       }
     }
     
     // If opponent has 2 pieces in the bottom middle three spots
-    if (opponentPieces.length === 2) {
+    if (opponentPiecesCenter.length === 2) {
       // Find the empty column in the bottom middle three
       for (let col = 2; col <= 4; col++) {
         if (this.board[5][col] === null) {
@@ -248,14 +249,80 @@ class Game {
     }
     
     // Check if opponent already has 3 pieces in the bottom middle
-    if (opponentPieces.length === 3) {
-      // This is dangerous, we need to counter by placing a piece directly above
+    if (opponentPiecesCenter.length === 3) {
+      // This is very dangerous, high priority to block
       // Check which column needs immediate attention
       for (let col = 2; col <= 4; col++) {
         // If the row above is empty, place there to start blocking
         if (this.board[4][col] === null) {
           return col;
         }
+      }
+    }
+    
+    // 2. Check for ANY three in a row at the bottom
+    const bottomOpponentPieces = [];
+    for (let col = 0; col < 7; col++) {
+      if (this.board[5][col] === opponent) {
+        bottomOpponentPieces.push({ col });
+      }
+    }
+    
+    // Count sequences of 3 adjacent opponent pieces on bottom row
+    for (let startCol = 0; startCol <= 4; startCol++) {
+      let consecutiveCount = 0;
+      for (let i = 0; i < 3; i++) {
+        if (this.board[5][startCol + i] === opponent) {
+          consecutiveCount++;
+        }
+      }
+      
+      // If there are 3 consecutive opponent pieces
+      if (consecutiveCount === 3) {
+        // Check if we can place a piece on either end to block
+        if (startCol > 0 && this.board[5][startCol - 1] === null) {
+          return startCol - 1;
+        }
+        if (startCol + 3 < 7 && this.board[5][startCol + 3] === null) {
+          return startCol + 3;
+        }
+      }
+    }
+    
+    // 3. Avoid setting up a winning move for opponent
+    // If there's a potential winning sequence in the middle columns at bottom
+    for (let col = 1; col < 6; col++) {
+      // Only check empty slots
+      if (this.board[5][col] === null) {
+        // Check if placing our piece here would create a winning move for opponent above
+        // (i.e., avoid creating a perfect setup for them)
+        if (this.board[4][col] === null) { // Slot above is empty
+          // Make a simulation
+          const boardCopy = this.board.map(row => [...row]);
+          boardCopy[5][col] = player; // Our move
+          boardCopy[4][col] = opponent; // Potential opponent's next move
+          
+          // Check if this creates a win for the opponent
+          if (this.checkWinForBoard(boardCopy, 4, col)) {
+            // Avoid this move if possible and if we have better options
+            // Instead prefer center or near-center columns
+            const centerPreference = [3, 2, 4, 1, 5, 0, 6];
+            for (const preferredCol of centerPreference) {
+              if (preferredCol !== col && this.board[5][preferredCol] === null) {
+                return preferredCol;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // 4. Prefer center and adjacent columns if no specific threat
+    const validMoves = this.getValidMoves(this.board);
+    const centerPreference = [3, 2, 4, 1, 5];
+    for (const col of centerPreference) {
+      if (validMoves.includes(col)) {
+        return col;
       }
     }
     
@@ -269,9 +336,9 @@ class Game {
       return null;
     }
 
-    const MAX_DEPTH = 7;
+    const MAX_DEPTH = 9; // Increase max depth to 9
     const startTime = Date.now();
-    let timeLimit = 3000; // 3 seconds for regular AI moves, to ensure we don't exceed limits
+    let timeLimit = 7000; // 7 seconds for more thorough search
     
     // Initialize metrics for this AI move
     this.aiMetrics = {
@@ -463,24 +530,48 @@ class Game {
         }
       }
     }
-    return pieceCount <= 6; // First 6 moves
+    return pieceCount <= 8; // Expanded to first 8 moves for better opening strategy
   }
 
   // Get a strategic opening move
   getOpeningMove() {
     const validMoves = this.getValidMoves(this.board);
+    const player = this.currentPlayer;
+    const opponent = player === 1 ? 2 : 1;
     
-    // In opening, always prefer center column if available
-    if (validMoves.includes(3)) {
+    // Always start in center column if possible
+    if (this.board[5][3] === null) {
       return 3;
     }
     
-    // Then prefer columns adjacent to center
-    if (validMoves.includes(2)) return 2;
-    if (validMoves.includes(4)) return 4;
+    // Check for specific opening patterns that are known to be strong
     
-    // Then other columns
-    return validMoves[Math.floor(validMoves.length / 2)];
+    // If center column is taken by opponent, prefer column 2 or 4
+    if (this.board[5][3] === opponent) {
+      if (validMoves.includes(2)) return 2;
+      if (validMoves.includes(4)) return 4;
+    }
+    
+    // If we played in center, and opponent played adjacent, play on the other side to balance
+    if (this.board[5][3] === player) {
+      if (this.board[5][2] === opponent && validMoves.includes(4)) return 4;
+      if (this.board[5][4] === opponent && validMoves.includes(2)) return 2;
+    }
+    
+    // Avoid bottom corners in opening
+    const avoidColumns = [0, 6];
+    
+    // Use center-weighted selection for opening
+    // Prefer center, then adjacent, then further columns
+    const centerPreference = [3, 2, 4, 1, 5, 0, 6];
+    for (const col of centerPreference) {
+      if (validMoves.includes(col) && !avoidColumns.includes(col)) {
+        return col;
+      }
+    }
+    
+    // If somehow all preferred moves are unavailable, use any valid move
+    return validMoves[0];
   }
 
   minimax(board, depth, alpha, beta, maximizingPlayer, startTime, timeLimit) {
@@ -662,10 +753,28 @@ class Game {
       return -10000;
     }
     
-    // Center column preference - stronger weight
+    // Center column preference - much stronger weight
     const centerColumn = 3;
     const centerCount = board.filter(row => row[centerColumn] === player).length;
-    score += centerCount * 6;
+    score += centerCount * 10; // Increased weight for center control
+    
+    // Reward pieces in the adjacent columns as well (strong control of middle)
+    const adjacentColumns = [2, 4];
+    for (const col of adjacentColumns) {
+      const colCount = board.filter(row => row[col] === player).length;
+      score += colCount * 5; // Good but not as valuable as center
+    }
+    
+    // Penalize setting up too many pieces directly in the outermost columns 
+    // (unless they lead to winning threats)
+    const outerColumns = [0, 6];
+    for (const col of outerColumns) {
+      const colCount = board.filter(row => row[col] === player).length;
+      // Only penalize if we have more than 1 piece here
+      if (colCount > 1) {
+        score -= (colCount - 1) * 2;
+      }
+    }
     
     // Give more weight to lower rows (more stable positions)
     for (let r = 0; r < 6; r++) {
@@ -673,6 +782,22 @@ class Game {
         if (board[r][c] === player) {
           // More points for lower rows (r=5 is bottom row)
           score += (r + 1) * 0.5;
+        }
+      }
+    }
+    
+    // Extra penalty for creating a trap where opponent can win above our piece
+    for (let c = 0; c < 7; c++) {
+      for (let r = 0; r < 5; r++) { // Skip top row
+        if (board[r][c] === player && board[r+1][c] === null) {
+          // We have a piece with an empty space above it
+          // Check if opponent playing here would create a win
+          const boardCopy = board.map(row => [...row]);
+          boardCopy[r+1][c] = opponent;
+          
+          if (this.checkWinForBoard(boardCopy, r+1, c)) {
+            score -= 30; // Significant penalty for allowing a win right above
+          }
         }
       }
     }
@@ -907,13 +1032,13 @@ class Game {
     
     // Must have no opponent pieces to be a valid window for scoring
     if (opponentCount > 0) {
-      // Special case: block opponent's three in a row
+      // Critical case: block opponent's three in a row
       if (opponentCount === 3 && emptyCount === 1) {
-        return -25; // Very important to block
+        return -50; // Extremely important to block
       }
-      // Less urgent: block opponent's two in a row
+      // More urgent: block opponent's two in a row
       else if (opponentCount === 2 && emptyCount === 2) {
-        return -5;
+        return -8; // Higher priority than before
       }
       return 0;
     }
@@ -921,9 +1046,9 @@ class Game {
     if (playerCount === 4) {
       return 100; // Win
     } else if (playerCount === 3 && emptyCount === 1) {
-      return 20; // Strong threat
+      return 25; // Strong threat - higher value
     } else if (playerCount === 2 && emptyCount === 2) {
-      return 5; // Developing position
+      return 7; // Developing position - higher value
     } else if (playerCount === 1 && emptyCount === 3) {
       return 1; // Potential for future
     }
