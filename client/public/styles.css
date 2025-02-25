@@ -148,7 +148,7 @@ footer {
   border-radius: 10px;
   box-shadow: var(--shadow);
   width: 100%;
-  max-width: 600px;
+  max-width: 590px; /* Match board width exactly */
   margin-bottom: 2rem;
 }
 
@@ -241,15 +241,23 @@ footer {
 /* Game Container */
 .game-container {
   width: 100%;
-  max-width: 700px; /* Match the board-wrapper max-width */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
 }
 
+/* Fixed width for game controls */
+.game-controls {
+  width: 100%;
+  max-width: 590px; /* Match board width exactly */
+  display: flex;
+  justify-content: center;
+}
+
 .game-info {
   width: 100%;
+  max-width: 590px; /* Match board width exactly */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -305,6 +313,7 @@ footer {
   box-shadow: var(--shadow);
   margin-bottom: 1rem;
   width: 100%;
+  max-width: 590px; /* Match board width exactly */
   height: 88px; /* Fixed height to prevent layout shift */
   display: flex;
   flex-direction: column;
@@ -325,7 +334,7 @@ footer {
   font-weight: normal;
   color: #777;
   width: 100%;
-  max-width: 650px; /* Constrain width to avoid layout shifts */
+  max-width: 580px; /* Slightly less than status message to avoid overflow issues */
 }
 
 .ai-metric {
@@ -342,7 +351,7 @@ footer {
 .board-wrapper {
   position: relative;
   width: 100%;
-  max-width: 700px;
+  max-width: 590px; /* Fixed exact board size */
   margin: 0 auto;
 }
 
@@ -464,6 +473,7 @@ footer {
   box-shadow: var(--shadow);
   max-width: 500px;
   width: 90%;
+  max-width: 590px; /* Match board width exactly */
   text-align: center;
 }
 
