@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Four</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Play Connect Four online with a friend or against an AI opponent with minimax algorithm">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Connect Four</h1>
+      <div class="subtitle">Play against a friend or challenge the AI!</div>
+    </header>
+    
+    <div id="game-modes" class="game-modes">
+      <h2>Select Game Mode</h2>
+      <div class="buttons">
+        <button id="one-player" class="btn primary">1 Player (vs AI)</button>
+        <button id="two-player" class="btn secondary">2 Players</button>
+      </div>
+      <div class="game-info-text">
+        <p>
+          <strong>About the AI:</strong> The computer opponent uses the minimax algorithm with alpha-beta pruning, 
+          searching up to 5 moves ahead to find the best move. Can you outsmart it?
+        </p>
+        <p>
+          <strong>Game progress is saved</strong> automatically, so you can return to your game even after closing the browser.
+        </p>
+      </div>
+    </div>
+
+    <div id="game-container" class="game-container hidden">
+      <div class="game-info">
+        <div id="player-turn" class="player-turn">
+          <div class="player">
+            <div class="player-disc player1"></div>
+            <span>Player 1</span>
+          </div>
+          <div class="player">
+            <div class="player-disc player2"></div>
+            <span>Player 2</span>
+          </div>
+        </div>
+        <div id="status-message" class="status-message"></div>
+      </div>
+
+      <div id="board-wrapper" class="board-wrapper">
+        <div id="column-indicators" class="column-indicators">
+          <div class="indicator" data-col="0"></div>
+          <div class="indicator" data-col="1"></div>
+          <div class="indicator" data-col="2"></div>
+          <div class="indicator" data-col="3"></div>
+          <div class="indicator" data-col="4"></div>
+          <div class="indicator" data-col="5"></div>
+          <div class="indicator" data-col="6"></div>
+        </div>
+        <div id="board" class="board">
+          <!-- Board will be generated with JS -->
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button id="new-game" class="btn primary">New Game</button>
+        <button id="share-game" class="btn secondary">Share Game</button>
+      </div>
+    </div>
+
+    <div id="share-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Share this game</h2>
+        <p>Send this link to your friend:</p>
+        <div class="share-link-container">
+          <input id="share-link" type="text" readonly>
+          <button id="copy-link" class="btn primary">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="winner-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 id="winner-message">Player X wins!</h2>
+        <div class="buttons">
+          <button id="play-again" class="btn primary">Play Again</button>
+          <button id="back-to-menu" class="btn secondary">Back to Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Click on any column to drop a piece. Connect four pieces in a row (horizontally, vertically, or diagonally) to win!</p>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
